@@ -58,6 +58,12 @@ COPY . /fosslight_scanner
 WORKDIR /fosslight_scanner
 RUN pip3 install . --no-deps
 
+# Install custom volume plugin
+# usr/local/bin 경로: 임의로 정한 경로가 아닙니다. 
+# 이 경로는 유닉스 계열 시스템에서 로컬에 설치된 실행 파일들을 저장하는 표준 디렉토리
+COPY custom_volume_plugin.py /usr/local/bin/custom_volume_plugin
+RUN chmod +x /usr/local/bin/custom_volume_plugin
+
 # 기타 의존성 설치
 RUN pip3 install --upgrade pip && \
     pip3 install dparse && \
