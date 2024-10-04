@@ -7,7 +7,6 @@ import subprocess
 import logging
 from datetime import datetime
 import os
-import platform
 
 
 def setup_logging():
@@ -19,18 +18,19 @@ def setup_logging():
 
 
 def is_double_clicked():
-    return (sys.argv[0].endswith('.exe') and len(sys.argv) == 1) or \
-           (sys.argv[0].endswith('.app') and len(sys.argv) == 2 and sys.argv[1] == '-psn_0_0')
+    return sys.argv[0].endswith('.exe') and len(sys.argv) == 1
 
 
 def check_and_pull_image(image_name):
     try:
+        # Check if the image exists locally
         result = subprocess.run(["docker", "image", "inspect", image_name],
                                 capture_output=True, text=True)
         if result.returncode == 0:
             logging.info(f"Image {image_name} already exists locally.")
             return True
 
+        # If the image doesn't exist, pull it
         logging.info(f"Pulling the image {image_name} from Docker Hub")
         subprocess.run(["docker", "pull", image_name], check=True)
         logging.info(f"Successfully pulled the image {image_name}")
@@ -168,17 +168,20 @@ def remove_wfp_file(output_path):
         except Exception as e:
             logging.error(f"Failed to remove WFP file: {wfp_file}. Error: {e}")
 
+def convert_path_for_docker(path):
+    if sys.platform == "win32":
+        # Windows: C:\ 경로를 /c/로 변환
+        return path.replace('\\', '/').replace('C:', '/c')
+    elif sys.platform == "darwin":
+        # macOS: 별도의 경로 변환 필요 없음
+        return path
+    else:
+        # Linux: 별도의 경로 변환 필요 없음
+        return path
 
 def run_fosslight(image, analysis_type, input_source, output_path, additional_options):
-    # Convert paths to Docker-compatible paths based on OS
-    if platform.system() == 'Windows':
-        output_path = output_path.replace('\\', '/').replace('C:', '/c')
-        if analysis_type == 'local':
-            input_source = input_source.replace('\\', '/').replace('C:', '/c')
-    elif platform.system() == 'Darwin':  # macOS
-        output_path = output_path.replace('/Volumes/', '/').replace(' ', '\ ')
-        if analysis_type == 'local':
-            input_source = input_source.replace('/Volumes/', '/').replace(' ', '\ ')
+    # Convert Windows paths to Docker-compatible paths
+    output_path = convert_path_for_docker(output_path)
 
     # Construct the Docker command
     docker_cmd = [
@@ -211,11 +214,9 @@ def run_fosslight(image, analysis_type, input_source, output_path, additional_op
         process = subprocess.Popen(docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    bufsize=1, universal_newlines=True, encoding='utf-8')
         for line in process.stdout:
-            line = line.strip()
-            if line:  # Only log non-empty lines
-                print(line)  # Print to console in real-time
-                sys.stdout.flush()  # Ensure real-time output
-                logging.info(line)  # Log to file
+            print(line)
+            sys.stdout.flush()
+            logging.info(line)
         process.wait()
         if process.returncode != 0:
             logging.error(f"FossLight exited with error code {process.returncode}")
@@ -230,9 +231,7 @@ def run_fosslight(image, analysis_type, input_source, output_path, additional_op
 
 
 def get_execution_mode():
-    if platform.system() == 'Darwin' and sys.argv[0].endswith('.app'):
-        return "auto"
-    elif len(sys.argv) > 1 and sys.argv[1] == "--manual":
+    if len(sys.argv) > 1 and sys.argv[1] == "--manual":
         return "manual"
     return "auto"
 
@@ -246,8 +245,7 @@ def main():
     execution_mode = get_execution_mode()
 
     if execution_mode == "auto":
-        logging.info("Executing in automatic mode")
-        # nanayah99 -> fosslight 수정 필요
+        logging.info("Executing in automatic mode (double-click)")
         image_name = "nanayah99/fosslight_scanner:latest"
         if not check_and_pull_image(image_name):
             print(f"Failed to ensure the presence of the Docker image: {image_name}")
@@ -259,7 +257,7 @@ def main():
         output_path = current_dir
         additional_options = ["-f", "excel"]
     else:
-        logging.info("Executing in manual mode")
+        logging.info("Executing in manual mode (command prompt)")
         image, analysis_type, input_source = get_user_input()
         output_path = input("Enter path for output: ")
         additional_options = get_additional_options()
