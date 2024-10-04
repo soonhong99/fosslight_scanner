@@ -61,30 +61,34 @@ jobs:
         asset_name: fosslight_wrapper.exe
         asset_content_type: application/vnd.microsoft.portable-executable
 
-  create-macos-app:
-    runs-on: macos-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+create-macos-app:
+  runs-on: macos-latest
+  steps:
+  - name: Checkout code
+    uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.9'
+  - name: Set up Python
+    uses: actions/setup-python@v2
+    with:
+      python-version: '3.9'
 
-    - name: Install dependencies
-      run: |
-        pip install pyinstaller
+  - name: Install dependencies
+    run: |
+      pip install pyinstaller
 
-    - name: Create .app for macOS
-      run: pyinstaller --onefile --windowed fosslight_wrapper.py
+  - name: Create .app for macOS
+    run: pyinstaller --onefile --windowed fosslight_wrapper.py
 
-    - name: Upload .app to release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./dist/fosslight_wrapper.app
-        asset_name: fosslight_wrapper.app
-        asset_content_type: application/x-mac-app
+  - name: Zip .app file
+    run: zip -r fosslight_wrapper.zip ./dist/fosslight_wrapper.app
+
+  - name: Upload .app to release
+    uses: actions/upload-release-asset@v1
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      upload_url: ${{ github.event.release.upload_url }}
+      asset_path: ./dist/fosslight_wrapper.zip
+      asset_name: fosslight_wrapper.zip
+      asset_content_type: application/zip
+
