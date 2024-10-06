@@ -35,13 +35,16 @@ RUN echo "export JAVA_HOME=\$(dirname \$(dirname \$(readlink -f \$(which java)))
 # Install license-checker globally
 RUN npm install -g license-checker
 
-# Install Android SDK
+# Install Android SDK (Updated)
 RUN mkdir -p /opt/android-sdk && \
-    wget -q https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip && \
-    unzip -q commandlinetools-linux-7583922_latest.zip -d /opt/android-sdk && \
-    rm commandlinetools-linux-7583922_latest.zip && \
-    yes | /opt/android-sdk/cmdline-tools/bin/sdkmanager --licenses && \
-    /opt/android-sdk/cmdline-tools/bin/sdkmanager "platform-tools" "build-tools;30.0.3"
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip && \
+    unzip -q commandlinetools-linux-8512546_latest.zip -d /opt/android-sdk && \
+    rm commandlinetools-linux-8512546_latest.zip && \
+    mv /opt/android-sdk/cmdline-tools /opt/android-sdk/latest && \
+    mkdir -p /opt/android-sdk/cmdline-tools && \
+    mv /opt/android-sdk/latest /opt/android-sdk/cmdline-tools && \
+    yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=/opt/android-sdk && \
+    /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;30.0.3" --sdk_root=/opt/android-sdk
 
 # Install Flutter
 RUN git clone https://github.com/flutter/flutter.git /opt/flutter && \
@@ -50,8 +53,7 @@ RUN git clone https://github.com/flutter/flutter.git /opt/flutter && \
 # Install CocoaPods
 RUN gem install cocoapods
 
-# Install Carthage
-RUN brew install carthage
+# Install Carthage (Removed as it's not directly supported on Linux)
 
 # Install .NET Core SDK
 RUN wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
@@ -90,7 +92,7 @@ RUN pip3 install . --no-deps && \
     rm -rf ~/.cache/pip /root/.cache/pip
 
 # Add /usr/local/bin to the PATH
-ENV PATH="/usr/local/bin:/opt/flutter/bin:${PATH}"
+ENV PATH="/usr/local/bin:/opt/flutter/bin:/opt/android-sdk/cmdline-tools/latest/bin:${PATH}"
 ENV ANDROID_HOME="/opt/android-sdk"
 
 VOLUME /src
