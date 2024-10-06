@@ -22,7 +22,7 @@ RUN ln -sf /bin/bash /bin/sh && \
   unzip \
   ruby-full \
   golang-go \
-  && \
+  git && \
   curl -sL https://deb.nodesource.com/setup_14.x | bash - && \
   apt-get install -y nodejs && \
   apt-get clean && \
@@ -35,7 +35,7 @@ RUN echo "export JAVA_HOME=\$(dirname \$(dirname \$(readlink -f \$(which java)))
 # Install license-checker globally
 RUN npm install -g license-checker
 
-# Install Android SDK (Updated)
+# Install Android SDK
 RUN mkdir -p /opt/android-sdk && \
     wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip && \
     unzip -q commandlinetools-linux-8512546_latest.zip -d /opt/android-sdk && \
@@ -48,12 +48,11 @@ RUN mkdir -p /opt/android-sdk && \
 
 # Install Flutter
 RUN git clone https://github.com/flutter/flutter.git /opt/flutter && \
-    /opt/flutter/bin/flutter precache
+    export PATH="$PATH:/opt/flutter/bin" && \
+    flutter precache
 
 # Install CocoaPods
 RUN gem install cocoapods
-
-# Install Carthage (Removed as it's not directly supported on Linux)
 
 # Install .NET Core SDK
 RUN wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
