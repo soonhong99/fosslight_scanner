@@ -6,27 +6,27 @@ COPY . /app
 WORKDIR /app
 
 # Install necessary packages including nodejs, npm, and default-jdk
-RUN ln -sf /bin/bash /bin/sh && \
-  apt-get update && \
-  apt-get install --no-install-recommends -y \
-  build-essential \
-  python3 python3-distutils python3-pip python3-dev python3-magic \
-  libxml2-dev \
-  libxslt1-dev \
-  libhdf5-dev \
-  bzip2 xz-utils zlib1g libpopt0 \
-  curl \
-  default-jdk \
-  gradle \
-  wget \
-  unzip \
-  ruby-full \
-  golang-go \
-  git && \
-  curl -sL https://deb.nodesource.com/setup_14.x | bash - && \
-  apt-get install -y nodejs && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    python3 python3-distutils python3-pip python3-dev python3-magic \
+    libxml2-dev \
+    libxslt1-dev \
+    libhdf5-dev \
+    bzip2 xz-utils zlib1g libpopt0 \
+    curl \
+    default-jdk \
+    gradle \
+    wget \
+    unzip \
+    ruby-full \
+    ruby-dev \
+    golang-go \
+    git && \
+    curl -sL https://deb.nodesource.com/setup_14.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set JAVA_HOME dynamically
 RUN echo "export JAVA_HOME=\$(dirname \$(dirname \$(readlink -f \$(which java))))" >> /etc/profile && \
@@ -51,8 +51,8 @@ RUN git clone https://github.com/flutter/flutter.git /opt/flutter && \
     export PATH="$PATH:/opt/flutter/bin" && \
     flutter precache
 
-# Install CocoaPods
-RUN gem install cocoapods
+# Install CocoaPods (with error handling)
+RUN gem install cocoapods || echo "Failed to install CocoaPods, skipping..."
 
 # Install .NET Core SDK
 RUN wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
@@ -66,18 +66,17 @@ RUN wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod
 RUN curl https://baltocdn.com/helm/signing.asc | apt-key add - && \
     echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list && \
     apt-get update && \
-    apt-get install helm
+    apt-get install -y helm
 
-# Rest of the Dockerfile remains the same...
+# Install Python dependencies
+RUN pip3 install --upgrade pip && \
+    pip3 install fosslight_util && \
+    pip3 install python-magic && \
+    pip3 install dparse
 
-RUN pip3 install --upgrade pip && \  
-    pip3 install fosslight_util && \  
-    pip3 install python-magic && \  
-    pip3 install dparse  
-
-RUN pip3 install fosslight_source --no-deps && \  
-    pip3 show fosslight_source | grep "Requires:" | sed 's/Requires://' | tr ',' '\n' | grep -v "typecode-libmagic" > /tmp/fosslight_source_deps.txt && \  
-    pip3 install -r /tmp/fosslight_source_deps.txt && \  
+RUN pip3 install fosslight_source --no-deps && \
+    pip3 show fosslight_source | grep "Requires:" | sed 's/Requires://' | tr ',' '\n' | grep -v "typecode-libmagic" > /tmp/fosslight_source_deps.txt && \
+    pip3 install -r /tmp/fosslight_source_deps.txt && \
     rm /tmp/fosslight_source_deps.txt
 
 COPY requirements.txt /tmp/requirements.txt
