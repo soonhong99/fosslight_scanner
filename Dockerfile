@@ -96,11 +96,15 @@ RUN ln -sf /bin/bash /bin/sh && \
 
 # fosslight_source를 설치하되, typecode-libmagic은 제외
 RUN pip3 install --upgrade pip && \
-  pip3 install --no-deps . && \
+  pip3 install . && \
   pip3 show fosslight_source | grep "Requires:" | sed 's/Requires://' | tr ',' '\n' | grep -v "typecode-libmagic" > /tmp/fosslight_source_deps.txt && \
   pip3 install -r /tmp/fosslight_source_deps.txt && \
   pip3 install dparse && \
   rm -rf ~/.cache/pip /root/.cache/pipe /tmp/fosslight_source_deps.txt
 
+# typecode-libmagic을 설치하는 명령 (Darwin 제외)
+RUN if [ "$(uname)" != "Darwin" ]; then pip3 install typecode-libmagic; fi
+
 ENTRYPOINT ["/usr/local/bin/fosslight"]
+
 
