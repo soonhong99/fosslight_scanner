@@ -1,6 +1,6 @@
 # Copyright (c) 2022 LG Electronics Inc.
 # SPDX-License-Identifier: Apache-2.0
-FROM python:3.8-slim-buster
+FROM python:3.10-slim-buster
 
 COPY . /app
 WORKDIR	/app
@@ -18,21 +18,8 @@ RUN	ln -sf /bin/bash /bin/sh && \
   rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --upgrade pip && \
-  pip3 install dparse
-
-COPY requirements.txt /tmp/requirements.txt
-RUN grep -vE "fosslight[-_]source" /tmp/requirements.txt > /tmp/custom_requirements.txt && \
-    pip3 install -r /tmp/custom_requirements.txt && \
-    rm /tmp/requirements.txt /tmp/custom_requirements.txt
-
-RUN pip3 install fosslight_source --no-deps && \  
-    pip3 show fosslight_source | grep "Requires:" | sed 's/Requires://' | tr ',' '\n' | grep -v "typecode-libmagic" > /tmp/fosslight_source_deps.txt && \  
-    pip3 install -r /tmp/fosslight_source_deps.txt && \  
-    rm /tmp/fosslight_source_deps.txt
-
-COPY . /fosslight_scanner
-WORKDIR /fosslight_scanner
-RUN pip3 install . --no-deps && \
-    rm -rf ~/.cache/pip /root/.cache/pip
+  pip3 install . || true && \
+  pip3 install dparse && \
+  rm -rf ~/.cache/pip /root/.cache/pipe
 
 ENTRYPOINT ["/usr/local/bin/fosslight"]
