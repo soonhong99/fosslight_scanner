@@ -80,9 +80,9 @@
 FROM python:3.10-slim-buster
 
 COPY . /app
-WORKDIR	/app
+WORKDIR /app
 
-RUN	ln -sf /bin/bash /bin/sh && \
+RUN ln -sf /bin/bash /bin/sh && \
   apt-get update && \
   apt-get install --no-install-recommends -y  \
   build-essential \
@@ -94,9 +94,13 @@ RUN	ln -sf /bin/bash /bin/sh && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
+# fosslight_source를 설치하되, typecode-libmagic은 제외
 RUN pip3 install --upgrade pip && \
-  pip3 install . && \
+  pip3 install --no-deps . && \
+  pip3 show fosslight_source | grep "Requires:" | sed 's/Requires://' | tr ',' '\n' | grep -v "typecode-libmagic" > /tmp/fosslight_source_deps.txt && \
+  pip3 install -r /tmp/fosslight_source_deps.txt && \
   pip3 install dparse && \
-  rm -rf ~/.cache/pip /root/.cache/pipe
+  rm -rf ~/.cache/pip /root/.cache/pipe /tmp/fosslight_source_deps.txt
 
 ENTRYPOINT ["/usr/local/bin/fosslight"]
+
