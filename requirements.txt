@@ -1,1 +1,1 @@
-typecode-libmagic;sys_platform != "darwin"
+typecode-libmagic; sys_platform != "darwin"
