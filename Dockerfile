@@ -36,15 +36,22 @@ RUN echo "export JAVA_HOME=\$(dirname \$(dirname \$(readlink -f \$(which java)))
 RUN npm install -g license-checker
 
 # Install Android SDK
-RUN mkdir -p /opt/android-sdk && \
-    wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip && \
-    unzip -q commandlinetools-linux-8512546_latest.zip -d /opt/android-sdk && \
-    rm commandlinetools-linux-8512546_latest.zip && \
-    mv /opt/android-sdk/cmdline-tools /opt/android-sdk/latest && \
-    mkdir -p /opt/android-sdk/cmdline-tools && \
-    mv /opt/android-sdk/latest /opt/android-sdk/cmdline-tools && \
-    yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=/opt/android-sdk && \
-    /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;30.0.3" --sdk_root=/opt/android-sdk
+RUN apt-get update && apt-get install -y openjdk-11-jdk && \
+    mkdir -p /opt/android-sdk && \
+    cd /opt/android-sdk && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-8092744_latest.zip && \
+    unzip -q commandlinetools-linux-8092744_latest.zip && \
+    rm commandlinetools-linux-8092744_latest.zip && \
+    mv cmdline-tools latest && \
+    mkdir -p cmdline-tools && \
+    mv latest cmdline-tools/ && \
+    export PATH=$PATH:/opt/android-sdk/cmdline-tools/latest/bin && \
+    yes | sdkmanager --licenses --sdk_root=/opt/android-sdk && \
+    sdkmanager "platform-tools" "build-tools;30.0.3" --sdk_root=/opt/android-sdk || true
+
+# Set environment variables
+ENV ANDROID_HOME /opt/android-sdk
+ENV PATH ${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
 
 # Install Flutter
 RUN git clone https://github.com/flutter/flutter.git /opt/flutter && \
